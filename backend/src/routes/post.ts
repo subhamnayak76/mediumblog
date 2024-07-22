@@ -80,28 +80,39 @@ blogrouter.post("/", async(c) => {
         blogs
     })
 })
-  blogrouter.get("/:id", async(c) => {
-    const id = await c.req.param("id");
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env?.DATABASE_URL,
-    }).$extends(withAccelerate());
-    try{
-    const blog = await prisma.post.findFirst({
-      where: {
-        id : id
-      }
-      
-    })
-    return c.json({
-      blog
-    })
-  }
-  catch(e){
-    console.log("error ocurred",e);
-  }
+blogrouter.get('/:id', async (c) => {
+  const id = c.req.param("id");
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate())
 
-    return c.text("blog is updated");
-  });
+  try {
+      const blog = await prisma.post.findFirst({
+          where: {
+              id
+          },
+          select: {
+              id: true,
+              title: true,
+              content: true,
+              author: {
+                  select: {
+                      name: true
+                  }
+              }
+          }
+      })
+  
+      return c.json({
+          blog
+      });
+  } catch(e) {
+      c.status(411); // 4
+      return c.json({
+          message: "Error while fetching blog post"
+      });
+  }
+})
   
   blogrouter.put("/", async(c) => {
     const body = await c.req.json();
